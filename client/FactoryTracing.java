@@ -23,7 +23,6 @@ package com.vaticle.factory.tracing.client;
 
 import io.grpc.ManagedChannelBuilder;
 
-import javax.annotation.Nullable;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -82,7 +81,11 @@ public interface FactoryTracing extends AutoCloseable {
      * @return An instance that has connected to your server without any authentication.
      */
     static FactoryTracing create(String uri) {
-        return create(uri, null);
+        ManagedChannelBuilder<?> channelBuilder = ManagedChannelBuilder.forTarget(uri)
+                .keepAliveTime(1, TimeUnit.MINUTES)
+                .keepAliveWithoutCalls(true)
+                .useTransportSecurity();
+        return new FactoryTracingStandard(channelBuilder.build());
     }
 
     /**
@@ -94,15 +97,12 @@ public interface FactoryTracing extends AutoCloseable {
      * @return An instance that has securely connected to your Vaticle Factory server.
      */
     static FactoryTracing create(String uri, String username, String token) {
-        return create(uri, new FactoryTokenAuthClientInterceptor(username, token));
-    }
-
-    private static FactoryTracing create(String uri, @Nullable FactoryTokenAuthClientInterceptor authClientInterceptor) {
         ManagedChannelBuilder<?> channelBuilder = ManagedChannelBuilder.forTarget(uri)
                 .keepAliveTime(1, TimeUnit.MINUTES)
                 .keepAliveWithoutCalls(true)
                 .useTransportSecurity();
-        if (authClientInterceptor != null) channelBuilder.intercept(authClientInterceptor);
+        FactoryTokenAuthClientInterceptor authClientInterceptor = new FactoryTokenAuthClientInterceptor(username, token);
+        channelBuilder.intercept(authClientInterceptor);
         return new FactoryTracingStandard(channelBuilder.build());
     }
 
