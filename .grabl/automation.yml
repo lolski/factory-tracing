@@ -53,8 +53,8 @@ build:
     #     bazel test //client/test --test_output=errors
     deploy-maven-snapshot:
       filter:
-        owner: vaticle
-        branch: master
+        owner: lolski
+        branch: java-8-support
       image: vaticle-ubuntu-21.04
       dependencies: [build, build-dependency] # TODO: make it depend on test-client once fixed
       command: |
